@@ -25,7 +25,6 @@ public class TransactionServiceImpl implements ITransactionService {
     Logger logger = LoggerFactory.getLogger(TransactionServiceImpl.class);
 
     /**
-     *
      * @param request
      * @return
      * @throws AccountingException if any database  error occurs or account is not found for input accountId
@@ -42,26 +41,32 @@ public class TransactionServiceImpl implements ITransactionService {
             transaction = convertToTransactionsFromCreateTransactionRequest(request, currentAccount.get());
             transaction = transactionRepository.save(transaction);
         } catch (AccountingException e) {
-            logger.error("Error while creating transaction details in db for request {} , exception {}", request,  e.getMessage());
+            logger.error("Error while creating transaction details in db for request {} , exception {}", request, e.getMessage());
             throw e;
         }
         return convertTransactionsToCreateTransactionResponse(transaction);
     }
 
     private void validateRequest(CreateTransactionRequest request) throws AccountingException {
-        //todo
-        if(request.getAccountId() == null) {
-            throw new AccountingException(ErrorConstants.BAD_REQUEST);
+        if (request.getAccountId() == null) {
+            throw new AccountingException(ErrorConstants.BLANK_ACCOUNT_ID);
         }
-        if(request.getAmount() == null) {
-            throw new AccountingException(ErrorConstants.BAD_REQUEST);
+        if (!isValidAmount(request.getAmount())) {
+            throw new AccountingException(ErrorConstants.INVALID_AMOUNT);
         }
-        if(request.getOperationTypeId() == null) {
-            throw new AccountingException(ErrorConstants.BAD_REQUEST);
+        if (request.getOperationTypeId() == null) {
+            throw new AccountingException(ErrorConstants.BLANK_OPERATION_TYPE);
         }
-        if(!OperationTypes.isValidOperationTypeId(request.getOperationTypeId())) {
+        if (!OperationTypes.isValidOperationTypeId(request.getOperationTypeId())) {
             throw new AccountingException(ErrorConstants.INVALID_OPERATION_TYPE);
         }
+    }
+
+    private boolean isValidAmount(Double amount) {
+        if (amount == null) {
+            return false;
+        }
+        return BigDecimal.valueOf(amount).scale() <= 2;
     }
 
     private Transactions convertToTransactionsFromCreateTransactionRequest(CreateTransactionRequest request, Accounts account) {
@@ -80,6 +85,7 @@ public class TransactionServiceImpl implements ITransactionService {
         response.setStatusMessage("SUCCESS");
         return response;
     }
+
     private void adjustAmountBasedOnOperationType(CreateTransactionRequest request) {
         if (OperationTypes.isNegativeAmount(request.getOperationTypeId())) {
             request.setAmount(request.getAmount() * -1);

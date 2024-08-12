@@ -14,4 +14,7 @@ public class ErrorConstants {
     public static final String INVALID_OPERATION_TYPE = "100002";
     public static final String DOCUMENT_NUMBER_TOO_LONG = "100003";
     public static final String DUPLICATE_ACCOUNT_ENTRY = "100004";
+    public static final String BLANK_ACCOUNT_ID = "100005";
+    public static final String INVALID_AMOUNT = "100006";
+    public static final String BLANK_OPERATION_TYPE = "100007";
 }

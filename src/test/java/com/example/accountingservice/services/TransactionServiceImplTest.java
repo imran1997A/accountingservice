@@ -40,16 +40,13 @@ class TransactionServiceImplTest {
     @Test
     public void testCreateTransaction_Success() throws AccountingException {
         CreateTransactionRequest request = new CreateTransactionRequest();
-        // Set necessary fields in the request object
         request.setAccountId(1L);
         request.setAmount(100.00);
         request.setOperationTypeId(1);
 
         Accounts account = new Accounts();
-        // Set necessary fields in the account object
 
         Transactions transaction = new Transactions();
-        // Set necessary fields in the transaction object
 
         when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.of(account));
         when(transactionRepository.save(any(Transactions.class))).thenReturn(transaction);
@@ -57,7 +54,6 @@ class TransactionServiceImplTest {
         CreateTransactionResponse response = transactionService.createTransaction(request);
 
         assertNotNull(response);
-        // Add more assertions based on your response object
         verify(accountRepository, times(1)).findById(request.getAccountId());
         verify(transactionRepository, times(1)).save(any(Transactions.class));
     }
@@ -65,7 +61,6 @@ class TransactionServiceImplTest {
     @Test
     public void testCreateTransaction_AccountNotFound() {
         CreateTransactionRequest request = new CreateTransactionRequest();
-        // Set necessary fields in the request object
         request.setAccountId(1L);
         request.setAmount(100.00);
         request.setOperationTypeId(1);
@@ -82,15 +77,83 @@ class TransactionServiceImplTest {
     }
 
     @Test
+    public void testCreateTransaction_BlankAccountId() {
+        CreateTransactionRequest request = new CreateTransactionRequest();
+        request.setAmount(100.00);
+        request.setOperationTypeId(1);
+
+        when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
+
+        AccountingException exception = assertThrows(AccountingException.class, () -> {
+            transactionService.createTransaction(request);
+        });
+
+        assertEquals(ErrorConstants.BLANK_ACCOUNT_ID, exception.getCode());
+        verify(accountRepository, times(0)).findById(request.getAccountId());
+        verify(transactionRepository, never()).save(any(Transactions.class));
+    }
+
+    @Test
+    public void testCreateTransaction_InvalidAmount() {
+        CreateTransactionRequest request = new CreateTransactionRequest();
+        request.setAccountId(1L);
+        request.setAmount(100.001);
+        request.setOperationTypeId(1);
+
+        when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
+
+        AccountingException exception = assertThrows(AccountingException.class, () -> {
+            transactionService.createTransaction(request);
+        });
+
+        assertEquals(ErrorConstants.INVALID_AMOUNT, exception.getCode());
+        verify(accountRepository, times(0)).findById(request.getAccountId());
+        verify(transactionRepository, never()).save(any(Transactions.class));
+    }
+
+
+    @Test
+    public void testCreateTransaction_InvalidOperationType() {
+        CreateTransactionRequest request = new CreateTransactionRequest();
+        request.setAccountId(1L);
+        request.setAmount(100.01);
+        request.setOperationTypeId(8);
+        when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
+
+        AccountingException exception = assertThrows(AccountingException.class, () -> {
+            transactionService.createTransaction(request);
+        });
+
+        assertEquals(ErrorConstants.INVALID_OPERATION_TYPE, exception.getCode());
+        verify(accountRepository, times(0)).findById(request.getAccountId());
+        verify(transactionRepository, never()).save(any(Transactions.class));
+    }
+
+    @Test
+    public void testCreateTransaction_BlankOperationType() {
+        CreateTransactionRequest request = new CreateTransactionRequest();
+        request.setAccountId(1L);
+        request.setAmount(100.00);
+
+        when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
+
+        AccountingException exception = assertThrows(AccountingException.class, () -> {
+            transactionService.createTransaction(request);
+        });
+
+        assertEquals(ErrorConstants.BLANK_OPERATION_TYPE, exception.getCode());
+        verify(accountRepository, times(0)).findById(request.getAccountId());
+        verify(transactionRepository, never()).save(any(Transactions.class));
+    }
+
+    @Test
     public void testCreateTransaction_DatabaseError() {
         CreateTransactionRequest request = new CreateTransactionRequest();
-        // Set necessary fields in the request object
         request.setAccountId(1L);
         request.setAmount(100.00);
         request.setOperationTypeId(1);
 
         Accounts account = new Accounts();
-        // Set necessary fields in the account object
 
         when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.of(account));
         when(transactionRepository.save(any(Transactions.class))).thenThrow(new RuntimeException("Database Error"));

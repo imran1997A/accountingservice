@@ -31,6 +31,14 @@ public class Transactions {
     @Column(name = "amount", nullable = false, columnDefinition = "DECIMAL(16,2)")
     private BigDecimal amount;
 
+    @Column(name = "currency", nullable = false, length = 3)
+    private String currency;
+    @PrePersist
+    public void prePersist() {
+        if (this.currency == null) {
+            this.currency = "INR";  // Set default value to INR
+        }
+    }
     @CreationTimestamp
     @Column(name = "create_timestamp", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Date createTimestamp;
