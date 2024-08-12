@@ -1,0 +1,25 @@
+services:
+  dbservice:
+    image: mysql:9.0.1
+    environment:
+      MYSQL_DATABASE: accountingservice
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - 3306:3306
+    volumes:
+      - db_data:/var/lib/mysql
+  app:
+    build: .
+    ports:
+      - 8080:8080
+    environment:
+      spring.datasource.url: jdbc:mysql://dbservice:3306/accountingservice?createDatabaseIfNotExist=true&autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false
+      spring.datasource.username: root
+      spring.datasource.password: root
+    depends_on:
+      - dbservice
+
+
+
+volumes:
+  db_data:

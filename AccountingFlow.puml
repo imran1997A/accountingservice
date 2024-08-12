@@ -1,0 +1,29 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+
+Client -> AccountingService: Create Account Request[/accounts]
+AccountingService -> AccountingService : validate request
+AccountingService -> MySQL : save details if valid request
+AccountingService --> Client: Create Account Response
+
+|||
+|||
+
+
+
+Client -> AccountingService: Get Account Request[/accounts/{accountId}]
+AccountingService -> MySQL : fetch details
+AccountingService --> Client: Get Account Response
+
+
+|||
+|||
+
+
+Client -> AccountingService: Create Transaction Request[/transactions]
+AccountingService -> AccountingService : validate request
+AccountingService -> MySQL : save details if valid request
+AccountingService --> Client: Create Transaction Response
+
+@enduml
