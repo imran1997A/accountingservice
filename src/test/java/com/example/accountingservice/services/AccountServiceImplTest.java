@@ -2,6 +2,7 @@ package com.example.accountingservice.services;
 
 import com.example.accountingservice.constant.ErrorConstants;
 import com.example.accountingservice.exceptions.AccountingException;
+import com.example.accountingservice.exceptions.NotFoundException;
 import com.example.accountingservice.models.Accounts;
 import com.example.accountingservice.models.requests.CreateAccountRequest;
 import com.example.accountingservice.models.responses.CreateAccountResponse;
@@ -54,7 +55,7 @@ class AccountServiceImplTest {
 
         when(accountRepository.save(any(Accounts.class))).thenThrow(new RuntimeException("Database Error"));
 
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(AccountingException.class, () -> {
             accountService.createAccount(request);
         });
 
@@ -80,7 +81,7 @@ class AccountServiceImplTest {
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
-        AccountingException exception = assertThrows(AccountingException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             accountService.getAccount(accountId);
         });
 

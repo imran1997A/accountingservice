@@ -2,6 +2,8 @@ package com.example.accountingservice.services;
 
 import com.example.accountingservice.constant.ErrorConstants;
 import com.example.accountingservice.exceptions.AccountingException;
+import com.example.accountingservice.exceptions.NotFoundException;
+import com.example.accountingservice.exceptions.ValidationException;
 import com.example.accountingservice.models.Accounts;
 import com.example.accountingservice.models.Transactions;
 import com.example.accountingservice.models.requests.CreateTransactionRequest;
@@ -67,7 +69,7 @@ class TransactionServiceImplTest {
 
         when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
 
-        AccountingException exception = assertThrows(AccountingException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             transactionService.createTransaction(request);
         });
 
@@ -84,7 +86,7 @@ class TransactionServiceImplTest {
 
         when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
 
-        AccountingException exception = assertThrows(AccountingException.class, () -> {
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
             transactionService.createTransaction(request);
         });
 
@@ -102,7 +104,7 @@ class TransactionServiceImplTest {
 
         when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
 
-        AccountingException exception = assertThrows(AccountingException.class, () -> {
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
             transactionService.createTransaction(request);
         });
 
@@ -120,7 +122,7 @@ class TransactionServiceImplTest {
         request.setOperationTypeId(8);
         when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
 
-        AccountingException exception = assertThrows(AccountingException.class, () -> {
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
             transactionService.createTransaction(request);
         });
 
@@ -137,7 +139,7 @@ class TransactionServiceImplTest {
 
         when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.empty());
 
-        AccountingException exception = assertThrows(AccountingException.class, () -> {
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
             transactionService.createTransaction(request);
         });
 

@@ -32,10 +32,10 @@ public class ControllerAdviceHandlerTest {
     public void testHandleAccountingException() throws Exception {
         mockMvc.perform(get("/accounts/10002341")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value("FAILURE"))
                 .andExpect(jsonPath("$.statusCode").value("100001"))
-                .andExpect(jsonPath("$.statusMessage").value("No account details for given accountId"));
+                .andExpect(jsonPath("$.statusMessage").value("No account details found for given accountId"));
     }
 }

@@ -2,6 +2,9 @@ package com.example.accountingservice.services;
 
 import com.example.accountingservice.constant.ErrorConstants;
 import com.example.accountingservice.exceptions.AccountingException;
+import com.example.accountingservice.exceptions.ConflictException;
+import com.example.accountingservice.exceptions.NotFoundException;
+import com.example.accountingservice.exceptions.ValidationException;
 import com.example.accountingservice.models.Accounts;
 import com.example.accountingservice.models.requests.CreateAccountRequest;
 import com.example.accountingservice.models.responses.CreateAccountResponse;
@@ -14,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Optional;
 
 @Service
@@ -34,14 +36,12 @@ public class AccountServiceImpl implements IAccountService {
         Accounts account = convertRequestToAccounts(request);
         try {
             account = accountRepository.save(account);
-        }
-        catch (DataIntegrityViolationException violationException) {
+        } catch (DataIntegrityViolationException violationException) {
             logger.error("Error Occurred while saving account details in DB for request{}, exception {}", request, violationException.getMessage());
-            throw new AccountingException(ErrorConstants.DUPLICATE_ACCOUNT_ENTRY);
-        }
-        catch (Exception e) {
+            throw new ConflictException(ErrorConstants.DUPLICATE_ACCOUNT_ENTRY);
+        } catch (Exception e) {
             logger.error("Error Occurred while saving account details in DB for request{}, exception {}", request, e.getMessage());
-            throw e;
+            throw new AccountingException(ErrorConstants.INTERNAL_SERVER_ERROR);
         }
         return convertAccountsToCreateAccountResponse(account);
     }
@@ -58,7 +58,7 @@ public class AccountServiceImpl implements IAccountService {
             if (account.isPresent()) {
                 return convertAccountsToGetAccountResponse(account.get());
             } else {
-                throw new AccountingException(ErrorConstants.ACCOUNT_ID_DETAILS_NOT_FOUND);
+                throw new NotFoundException(ErrorConstants.ACCOUNT_ID_DETAILS_NOT_FOUND);
             }
         } catch (AccountingException e) {
             logger.error("Error Occurred while fetching account details from DB for accountId {}, exception {}", accountId, e.getMessage());
@@ -91,10 +91,10 @@ public class AccountServiceImpl implements IAccountService {
 
     private void validateRequest(CreateAccountRequest request) throws AccountingException {
         if (StringUtils.isBlank(request.getDocumentNumber())) {
-            throw new AccountingException(ErrorConstants.BLANK_DOCUMENT_NUMBER);
+            throw new ValidationException(ErrorConstants.BLANK_DOCUMENT_NUMBER);
         }
-        if(request.getDocumentNumber().length() > 20) {
-            throw new AccountingException(ErrorConstants.DOCUMENT_NUMBER_TOO_LONG);
+        if (request.getDocumentNumber().length() > 20) {
+            throw new ValidationException(ErrorConstants.DOCUMENT_NUMBER_TOO_LONG);
         }
     }
 }

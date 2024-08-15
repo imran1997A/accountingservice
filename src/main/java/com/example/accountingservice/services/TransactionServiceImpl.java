@@ -3,6 +3,8 @@ package com.example.accountingservice.services;
 import com.example.accountingservice.constant.ErrorConstants;
 import com.example.accountingservice.enums.OperationTypes;
 import com.example.accountingservice.exceptions.AccountingException;
+import com.example.accountingservice.exceptions.NotFoundException;
+import com.example.accountingservice.exceptions.ValidationException;
 import com.example.accountingservice.models.Accounts;
 import com.example.accountingservice.models.Transactions;
 import com.example.accountingservice.models.requests.CreateTransactionRequest;
@@ -36,7 +38,7 @@ public class TransactionServiceImpl implements ITransactionService {
         try {
             Optional<Accounts> currentAccount = accountRepository.findById(request.getAccountId());
             if (currentAccount.isEmpty()) {
-                throw new AccountingException(ErrorConstants.ACCOUNT_ID_DETAILS_NOT_FOUND);
+                throw new NotFoundException(ErrorConstants.ACCOUNT_ID_DETAILS_NOT_FOUND);
             }
             transaction = convertToTransactionsFromCreateTransactionRequest(request, currentAccount.get());
             transaction = transactionRepository.save(transaction);
@@ -47,18 +49,18 @@ public class TransactionServiceImpl implements ITransactionService {
         return convertTransactionsToCreateTransactionResponse(transaction);
     }
 
-    private void validateRequest(CreateTransactionRequest request) throws AccountingException {
+    private void validateRequest(CreateTransactionRequest request) throws ValidationException {
         if (request.getAccountId() == null) {
-            throw new AccountingException(ErrorConstants.BLANK_ACCOUNT_ID);
+            throw new ValidationException(ErrorConstants.BLANK_ACCOUNT_ID);
         }
         if (!isValidAmount(request.getAmount())) {
-            throw new AccountingException(ErrorConstants.INVALID_AMOUNT);
+            throw new ValidationException(ErrorConstants.INVALID_AMOUNT);
         }
         if (request.getOperationTypeId() == null) {
-            throw new AccountingException(ErrorConstants.BLANK_OPERATION_TYPE);
+            throw new ValidationException(ErrorConstants.BLANK_OPERATION_TYPE);
         }
         if (!OperationTypes.isValidOperationTypeId(request.getOperationTypeId())) {
-            throw new AccountingException(ErrorConstants.INVALID_OPERATION_TYPE);
+            throw new ValidationException(ErrorConstants.INVALID_OPERATION_TYPE);
         }
     }
 
