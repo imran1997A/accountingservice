@@ -24,6 +24,9 @@ public class Transactions {
     @JoinColumn(name = "account_id")
     private Accounts account;
 
+    @Column(name = "balance", nullable = false)
+    private BigDecimal balance;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "operation_type", nullable = false)
     private OperationTypes operationType;

@@ -17,7 +17,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
+
+import static java.lang.Math.abs;
 
 @Service
 @RequiredArgsConstructor
@@ -41,12 +44,44 @@ public class TransactionServiceImpl implements ITransactionService {
                 throw new NotFoundException(ErrorConstants.ACCOUNT_ID_DETAILS_NOT_FOUND);
             }
             transaction = convertToTransactionsFromCreateTransactionRequest(request, currentAccount.get());
+            //
+            if (!OperationTypes.isNegativeAmount(request.getOperationTypeId())) {
+                request.setAmount(compensatePreviousDebitTransactions(request.getAccountId(), request.getAmount()));
+                transaction.setBalance(BigDecimal.valueOf(request.getAmount()));
+            }
             transaction = transactionRepository.save(transaction);
         } catch (AccountingException e) {
             logger.error("Error while creating transaction details in db for request {} , exception {}", request, e.getMessage());
             throw e;
         }
         return convertTransactionsToCreateTransactionResponse(transaction);
+    }
+
+    private Double compensatePreviousDebitTransactions(Long accountId, Double creditAmount) throws AccountingException {
+        List<Transactions> debitTransactions = transactionRepository.findAllByAccountId(accountId);
+        for (Transactions currentTransactions : debitTransactions) {
+            double currentBalance = currentTransactions.getBalance().doubleValue();
+            if (currentBalance >= 0.0) {
+                continue;
+            }
+            if (creditAmount > abs(currentBalance)) {
+                creditAmount += currentBalance;
+                currentBalance = 0.00;
+                currentTransactions.setBalance(BigDecimal.valueOf(currentBalance));
+            } else {
+                currentBalance += creditAmount;
+                creditAmount = 0.00;
+                currentTransactions.setBalance(BigDecimal.valueOf(currentBalance));
+                break;
+            }
+        }
+        try {
+            transactionRepository.saveAll(debitTransactions);
+        } catch (Exception e) {
+            logger.error("Error While updating the debit transactions balance, exception {}", e.getMessage());
+            throw new AccountingException(ErrorConstants.INTERNAL_SERVER_ERROR);
+        }
+        return creditAmount;
     }
 
     private void validateRequest(CreateTransactionRequest request) throws ValidationException {
@@ -65,7 +100,7 @@ public class TransactionServiceImpl implements ITransactionService {
     }
 
     private boolean isValidAmount(Double amount) {
-        if (amount == null) {
+        if (amount == null || amount < 0.00) {
             return false;
         }
         return BigDecimal.valueOf(amount).scale() <= 2;
@@ -76,6 +111,7 @@ public class TransactionServiceImpl implements ITransactionService {
         transaction.setAccount(account);
         adjustAmountBasedOnOperationType(request);
         transaction.setAmount(BigDecimal.valueOf(request.getAmount()));
+        transaction.setBalance(BigDecimal.valueOf(request.getAmount()));
         transaction.setOperationType(OperationTypes.convertOperationTypeIdToEnum(request.getOperationTypeId()));
         return transaction;
     }

@@ -1,6 +1,7 @@
 package com.example.accountingservice.services;
 
 import com.example.accountingservice.constant.ErrorConstants;
+import com.example.accountingservice.enums.OperationTypes;
 import com.example.accountingservice.exceptions.AccountingException;
 import com.example.accountingservice.exceptions.NotFoundException;
 import com.example.accountingservice.exceptions.ValidationException;
@@ -16,6 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -146,6 +150,37 @@ class TransactionServiceImplTest {
         assertEquals(ErrorConstants.BLANK_OPERATION_TYPE, exception.getCode());
         verify(accountRepository, times(0)).findById(request.getAccountId());
         verify(transactionRepository, never()).save(any(Transactions.class));
+    }
+
+    @Test
+    public void testCreateTransaction_UpdateBalanceSuccessOnCredit() throws AccountingException {
+        CreateTransactionRequest request = new CreateTransactionRequest();
+        request.setAccountId(1L);
+        request.setAmount(100.00);
+        request.setOperationTypeId(4);
+
+        Accounts account = new Accounts();
+
+        Transactions debitTransaction = new Transactions();
+        debitTransaction.setOperationType(OperationTypes.WITHDRAWAL);
+        debitTransaction.setBalance(BigDecimal.valueOf(-50.00));
+
+        List<Transactions> debitTransactions  =new ArrayList<>();
+        debitTransactions.add(debitTransaction);
+
+        Transactions creditTransaction = new Transactions();
+        creditTransaction.setBalance(BigDecimal.valueOf(50.00));
+        when(accountRepository.findById(request.getAccountId())).thenReturn(Optional.of(account));
+        when(transactionRepository.save(any(Transactions.class))).thenReturn(creditTransaction);
+        when(transactionRepository.findAllByAccountId(anyLong())).thenReturn(debitTransactions);
+        CreateTransactionResponse response = transactionService.createTransaction(request);
+
+        assertNotNull(response);
+        assertEquals(creditTransaction.getBalance(), BigDecimal.valueOf(request.getAmount()));
+        verify(accountRepository, times(1)).findById(request.getAccountId());
+        verify(transactionRepository, times(1)).save(any(Transactions.class));
+        verify(transactionRepository, times(1)).findAllByAccountId(anyLong());
+        verify(transactionRepository, times(1)).saveAll(any());
     }
 
     @Test
